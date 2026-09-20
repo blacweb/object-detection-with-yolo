@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+```
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>YOLO Live Car Detection</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 30px;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+        margin-bottom: 10px;
+        font-size: 34px;
+    }
+
+    .header p {
+        color: #94a3b8;
+        font-size: 16px;
+    }
+
+    .card {
+        background: #1e293b;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .upload-area {
+        border: 2px dashed #475569;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .upload-label {
+        display: inline-block;
+        padding: 14px 25px;
+        background: #2563eb;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .upload-label:hover {
+        background: #1d4ed8;
+    }
+
+    .file-name {
+        margin-top: 15px;
+        color: #94a3b8;
+    }
+
+    button {
+        border: none;
+        padding: 14px 25px;
+        border-radius: 8px;
+        background: #16a34a;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #15803d;
+    }
+
+    button:disabled {
+        background: #475569;
+        cursor: not-allowed;
+    }
+
+    .status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #94a3b8;
+        display: none;
+    }
+
+    .live-section {
+        margin-top: 30px;
+        display: none;
+    }
+
+    .live-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .live-title {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .live-badge {
+        background: #dc2626;
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .video-container {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    #detectionStream {
+        width: 100%;
+        display: block;
+    }
+
+    .info {
+        margin-top: 20px;
+        background: #0f172a;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .info h3 {
+        margin-top: 0;
+    }
+
+    .info p {
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    .new-video {
+        margin-top: 20px;
+        display: none;
+    }
+
+    .loading {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 3px solid #64748b;
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .container {
+            padding: 15px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+        }
+
+        .upload-area {
+            padding: 25px;
+        }
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+```
+<div class="container">
+
+    <div class="header">
+
+        <h1>YOLO Car Detection</h1>
+
+        <p>
+            Upload a road video and watch YOLO detect cars live.
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <!-- UPLOAD SECTION -->
+
+        <div id="uploadSection">
+
+            <div class="upload-area">
+
+                <h2>Select Road Video</h2>
+
+                <p>
+                    Upload MP4, AVI, MOV, MKV or WEBM
+                </p>
+
+                <label
+                    class="upload-label"
+                    for="videoInput"
+                >
+                    Choose Video
+                </label>
+
+                <input
+                    id="videoInput"
+                    type="file"
+                    accept="video/*"
+                >
+
+                <div
+                    id="fileName"
+                    class="file-name"
+                >
+                    No video selected
+                </div>
+
+                <br>
+
+                <button
+                    id="startButton"
+                    disabled
+                >
+                    Start Live Detection
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+            id="status"
+            class="status"
+        ></div>
+
+
+        <!-- LIVE DETECTION -->
+
+        <div
+            id="liveSection"
+            class="live-section"
+        >
+
+            <div class="live-header">
+
+                <div class="live-title">
+                    YOLO Live Detection
+                </div>
+
+                <div class="live-badge">
+                    ● LIVE
+                </div>
+
+            </div>
+
+
+            <div class="video-container">
+
+                <img
+                    id="detectionStream"
+                    alt="YOLO Live Detection"
+                >
+
+            </div>
+
+
+            <div class="info">
+
+                <h3>Live Processing</h3>
+
+                <p>
+                    The uploaded road video is being processed
+                    frame by frame. YOLO detects cars, draws
+                    bounding boxes, and immediately sends the
+                    processed frames to the browser.
+                </p>
+
+                <p>
+                    You do not have to wait for the complete
+                    video to finish processing before seeing
+                    detections.
+                </p>
+
+            </div>
+
+
+            <div
+                id="newVideo"
+                class="new-video"
+            >
+
+                <button onclick="location.reload()">
+                    Process Another Video
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const videoInput =
+        document.getElementById("videoInput");
+
+    const fileName =
+        document.getElementById("fileName");
+
+    const startButton =
+        document.getElementById("startButton");
+
+    const status =
+        document.getElementById("status");
+
+    const liveSection =
+        document.getElementById("liveSection");
+
+    const detectionStream =
+        document.getElementById("detectionStream");
+
+    const newVideo =
+        document.getElementById("newVideo");
+
+
+    let selectedFile = null;
+
+
+    // ================================================
+    // FILE SELECTION
+    // ================================================
+
+    videoInput.addEventListener(
+        "change",
+        function () {
+
+            if (this.files.length === 0) {
+
+                selectedFile = null;
+
+                fileName.textContent =
+                    "No video selected";
+
+                startButton.disabled = true;
+
+                return;
+            }
+
+
+            selectedFile = this.files[0];
+
+            fileName.textContent =
+                selectedFile.name;
+
+            startButton.disabled = false;
+
+        }
+    );
+
+
+    // ================================================
+    // START LIVE DETECTION
+    // ================================================
+
+    startButton.addEventListener(
+        "click",
+        async function () {
+
+            if (!selectedFile) {
+                return;
+            }
+
+
+            startButton.disabled = true;
+
+
+            status.style.display = "block";
+
+            status.innerHTML =
+                '<span class="loading"></span>' +
+                'Uploading video...';
+
+
+            try {
+
+                // ====================================
+                // CREATE FORM DATA
+                // ====================================
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "file",
+                    selectedFile
+                );
+
+
+                // ====================================
+                // UPLOAD VIDEO
+                // ====================================
+
+                const response =
+                    await fetch(
+                        "/upload-video",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    const errorText =
+                        await response.text();
+
+                    throw new Error(
+                        errorText ||
+                        "Video upload failed."
+                    );
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        "Server failed to upload video."
+                    );
+                }
+
+
+                // ====================================
+                // SHOW LIVE SECTION
+                // ====================================
+
+                status.innerHTML =
+                    '<span class="loading"></span>' +
+                    'Starting YOLO live detection...';
+
+
+                liveSection.style.display =
+                    "block";
+
+
+                // ====================================
+                // START LIVE MJPEG STREAM
+                // ====================================
+
+                detectionStream.src =
+                    data.stream_url +
+                    "?t=" +
+                    Date.now();
+
+
+                // ====================================
+                // STREAM STARTED
+                // ====================================
+
+                status.innerHTML =
+                    "YOLO is processing the video live.";
+
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+                status.innerHTML =
+                    "Error: " +
+                    error.message;
+
+                startButton.disabled = false;
+
+            }
+
+        }
+    );
+
+
+    // ================================================
+    // STREAM ENDED / ERROR
+    // ================================================
+
+    detectionStream.addEventListener(
+        "error",
+        function () {
+
+            newVideo.style.display =
+                "block";
+
+            status.innerHTML =
+                "Video processing finished.";
+
+        }
+    );
+
+</script>
+```
+
+</body>
+
+</html>
